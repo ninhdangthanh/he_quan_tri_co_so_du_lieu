@@ -7,14 +7,12 @@ CREATE PROCEDURE lab_7_1
     @email VARCHAR(50)
 AS
 BEGIN
-    -- Kiểm tra xem tenhang đã tồn tại hay chưa
     IF EXISTS (SELECT 1 FROM Hangsx WHERE tenhang = @tenhang)
     BEGIN
         PRINT 'Tên hãng sản xuất đã tồn tại. Vui lòng nhập tên khác!'
         RETURN
     END
 
-    -- Nếu tenhang chưa tồn tại, thực hiện thêm dữ liệu vào bảng Hangsx
     INSERT INTO Hangsx (mahangsx, tenhang, diachi, sodt, email)
     VALUES (@mahangsx, @tenhang, @diachi, @sodt, @email)
 
@@ -33,10 +31,8 @@ CREATE PROCEDURE lab7_2
     @mota VARCHAR(100)
 AS
 BEGIN
-    -- Kiểm tra xem masp đã tồn tại hay chưa
     IF EXISTS (SELECT 1 FROM Sanpham WHERE masp = @masp)
     BEGIN
-        -- Nếu masp đã tồn tại, thực hiện cập nhật thông tin sản phẩm theo mã
         UPDATE Sanpham
         SET mahangsx = @mahangsx,
             tensp = @tensp,
@@ -51,7 +47,6 @@ BEGIN
     END
     ELSE
     BEGIN
-        -- Nếu masp chưa tồn tại, thực hiện thêm mới sản phẩm vào bảng Sanpham
         INSERT INTO Sanpham (masp, mahangsx, tensp, soluong, mausac, giaban, donvitinh, mota)
         VALUES (@masp, @mahangsx, @tensp, @soluong, @mausac, @giaban, @donvitinh, @mota)
 
@@ -65,7 +60,6 @@ CREATE PROCEDURE lab7_3
     @tenhang VARCHAR(50)
 AS
 BEGIN
-    -- Kiểm tra xem tenhang có tồn tại trong bảng Hangsx hay không
     IF NOT EXISTS (SELECT 1 FROM Hangsx WHERE tenhang = @tenhang)
     BEGIN
         PRINT 'Hãng sản xuất không tồn tại!'
@@ -75,10 +69,8 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION
 
-            -- Xóa các sản phẩm cung ứng của hãng đó
             DELETE FROM Sanpham WHERE mahangsx = (SELECT mahangsx FROM Hangsx WHERE tenhang = @tenhang)
 
-            -- Xóa hãng sản xuất đó
             DELETE FROM Hangsx WHERE tenhang = @tenhang
 
             COMMIT TRANSACTION
@@ -249,4 +241,57 @@ BEGIN
         INSERT INTO Xuat (sohdx, masp, manv, ngay, soluongX)
         VALUES (@sohdx, @masp, @manv, @ngay, @soluongX)
     END
+END
+
+-- cau 7
+CREATE PROCEDURE lab7_7
+    @manv VARCHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Kiểm tra xem nhân viên có tồn tại hay không
+    IF NOT EXISTS (SELECT * FROM nhanvien WHERE manv = @manv)
+    BEGIN
+        PRINT 'Không tìm thấy nhân viên cần xóa';
+        RETURN;
+    END
+    
+    BEGIN TRY
+        BEGIN TRANSACTION
+            -- Xóa dữ liệu trong bảng Nhap
+            DELETE FROM Nhap WHERE manv = @manv;
+            -- Xóa dữ liệu trong bảng Xuat
+            DELETE FROM Xuat WHERE manv = @manv;
+            -- Xóa dữ liệu trong bảng nhanvien
+            DELETE FROM nhanvien WHERE manv = @manv;
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+    
+    PRINT 'Đã xóa nhân viên và các bảng liên quan thành công';
+END
+
+
+-- cau 8
+CREATE PROCEDURE lab7_8(@masp varchar(20))
+AS
+BEGIN
+    -- Kiểm tra sản phẩm có tồn tại hay không
+    IF NOT EXISTS (SELECT * FROM sanpham WHERE masp = @masp)
+    BEGIN
+        PRINT 'Sản phẩm không tồn tại'
+        RETURN
+    END
+    
+    -- Xóa các bản ghi trong bảng Nhap và Xuat liên quan đến sản phẩm
+    DELETE FROM Nhap WHERE masp = @masp
+    DELETE FROM Xuat WHERE masp = @masp
+    
+    -- Xóa bản ghi sản phẩm
+    DELETE FROM sanpham WHERE masp = @masp
+    PRINT 'Xóa sản phẩm thành công'
 END

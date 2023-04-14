@@ -1,77 +1,362 @@
------Câu 1------
-CREATE TABLE Khoa (
-    Makhoa INT PRIMARY KEY,
-    Tenkhoa VARCHAR(50) NOT NULL,
-    Dienthoai VARCHAR(20) NOT NULL
-);
-
-CREATE TABLE Lop (
-    Malop INT PRIMARY KEY,
-    Tenlop VARCHAR(50) NOT NULL,
-    Khoa VARCHAR(50) NOT NULL,
-    Hedt VARCHAR(50) NOT NULL,
-    Namnhaphoc INT NOT NULL,
-    Makhoa INT NOT NULL,
-    FOREIGN KEY (Makhoa) REFERENCES Khoa(Makhoa)
-);
-
-CREATE PROCEDURE ThemKhoa
-    @makhoa INT,
-    @tenkhoa VARCHAR(50),
-    @dienthoai VARCHAR(20)
+--1a--
+CREATE PROCEDURE sp_ThemKhoa
+    @makhoa nvarchar(10),
+    @tenkhoa nvarchar(50),
+    @dienthoai nvarchar(20)
 AS
 BEGIN
-    IF NOT EXISTS (SELECT * FROM Khoa WHERE Tenkhoa = @tenkhoa)
+    IF EXISTS (SELECT * FROM KHOA WHERE tenkhoa = @tenkhoa)
     BEGIN
-        INSERT INTO Khoa (Makhoa, Tenkhoa, Dienthoai)
-        VALUES (@makhoa, @tenkhoa, @dienthoai)
-        PRINT N'Thêm khoa thành công.'
+        PRINT 'Tên khoa đã tồn tại'
     END
     ELSE
     BEGIN
-        PRINT N'Khoa đã tồn tại trong cơ sở dữ liệu.'
+        INSERT INTO KHOA(makhoa, tenkhoa, dienthoai)
+        VALUES (@makhoa, @tenkhoa, @dienthoai)
+        PRINT 'Thêm khoa thành công'
     END
 END
-EXEC ThemKhoa 1, 'Khoa Toan-Tin', '0772269999'
-EXEC ThemKhoa 2, 'Khoa Thương Mại Điện Tử', '0369944444'
--------Câu 2-------
-go
-CREATE PROCEDURE ThemLop
-    @malop INT,
-    @tenlop VARCHAR(50),
-    @khoa VARCHAR(50),
-    @hedt VARCHAR(50),
-    @namnhaphoc INT,
-    @makhoa INT
+
+--1b--
+CREATE PROCEDURE sp_ThemLop 
+    @malop nvarchar(10),
+    @tenlop nvarchar(50),
+    @khoa nvarchar(10),
+    @hedt nvarchar(10),
+    @namnhaphoc nvarchar(10),
+    @makhoa nvarchar(10)
 AS
 BEGIN
-    DECLARE @count INT
-    SELECT @count = COUNT(*) FROM Lop WHERE Tenlop = @tenlop
-    IF (@count > 0)
+    IF EXISTS (SELECT * FROM Lop WHERE tenlop = @tenlop)
     BEGIN
-        PRINT N'Lớp đã tồn tại trong cơ sở dữ liệu.'
+        PRINT 'Tên lớp đã tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM KHOA WHERE makhoa = @makhoa)
+    BEGIN
+        PRINT 'Mã khoa không tồn tại'
     END
     ELSE
     BEGIN
-        SELECT @count = COUNT(*) FROM Khoa WHERE Makhoa = @makhoa
-        IF (@count = 0)
+        INSERT INTO Lop(malop, tenlop, khoa, hedt, namnhaphoc, makhoa)
+        VALUES (@malop, @tenlop, @khoa, @hedt, @namnhaphoc, @makhoa)
+        PRINT 'Thêm lớp thành công'
+    END
+END
+
+--1c--
+CREATE PROCEDURE sp_ThemKhoa2
+    @makhoa nvarchar(10),
+    @tenkhoa nvarchar(50),
+    @dienthoai nvarchar(20)
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM KHOA WHERE tenkhoa = @tenkhoa)
+    BEGIN
+        SELECT 0
+    END
+    ELSE
+    BEGIN
+        INSERT INTO KHOA(makhoa, tenkhoa, dienthoai)
+        VALUES (@makhoa, @tenkhoa, @dienthoai)
+        SELECT 1
+    END
+END
+
+--1d--
+CREATE PROCEDURE sp_ThemLop2 
+    @malop nvarchar(10),
+    @tenlop nvarchar(50),
+    @khoa nvarchar(10),
+    @hedt nvarchar(10),
+    @namnhaphoc nvarchar(10),
+    @makhoa nvarchar(10)
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM Lop WHERE tenlop = @tenlop)
+    BEGIN
+        SELECT 0
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM KHOA WHERE makhoa = @makhoa)
+    BEGIN
+        SELECT 1
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Lop(malop, tenlop, khoa, hedt, namnhaphoc, makhoa)
+        VALUES (@malop, @tenlop, @khoa, @hedt, @namnhaphoc, @makhoa)
+        SELECT 2
+    END
+END
+
+--2a--
+CREATE PROCEDURE SP_Them_Nhan_Vien
+    @MaNV nvarchar(10),
+    @MaCV nvarchar(10),
+    @TenNV nvarchar(50),
+    @Ngaysinh date,
+    @LuongCanBan float,
+    @NgayCong int,
+    @PhuCap float
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM tblChucVu WHERE MaCV = @MaCV)
+    BEGIN
+        PRINT 'Mã chức vụ không tồn tại'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO tblNhanVien (MaNV, MaCV, TenNV, Ngaysinh, LuongCanBan, NgayCong, PhuCap)
+        VALUES (@MaNV, @MaCV, @TenNV, @Ngaysinh, @LuongCanBan, @NgayCong, @PhuCap)
+        PRINT 'Thêm nhân viên thành công'
+    END
+END
+
+--2b--
+CREATE PROCEDURE SP_CapNhat_Nhan_Vien
+    @MaNV nvarchar(10),
+    @MaCV nvarchar(10),
+    @TenNV nvarchar(50),
+    @Ngaysinh date,
+    @LuongCanBan float,
+    @NgayCong int,
+    @PhuCap float
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM tblNhanVien WHERE MaNV = @MaNV)
+    BEGIN
+        PRINT 'Mã nhân viên không tồn tại'
+    END
+ELSE IF NOT EXISTS (SELECT * FROM tblChucVu WHERE MaCV = @MaCV)
+    BEGIN
+        PRINT 'Mã chức vụ không tồn tại'
+    END
+    ELSE
+    BEGIN
+        UPDATE tblNhanVien
+        SET MaCV = @MaCV, TenNV = @TenNV, Ngaysinh = @Ngaysinh, LuongCanBan = @LuongCanBan, NgayCong = @NgayCong, PhuCap = @PhuCap
+        WHERE MaNV = @MaNV
+        PRINT 'Cập nhật thông tin nhân viên thành công'
+    END
+END
+
+--2c--
+CREATE PROCEDURE SP_LuongLN
+AS
+BEGIN
+    SELECT MaNV, TenNV, LuongCanBan, NgayCong, PhuCap, LuongCanBan*NgayCong+PhuCap AS Luong
+    FROM tblNhanVien
+END
+
+--3a--
+CREATE PROCEDURE SP_NhapHangSXX
+    @MaHangSX nvarchar(10),
+    @TenHang nvarchar(50),
+    @DiaChi nvarchar(100),
+    @SoDT nvarchar(20),
+    @Email nvarchar(50)
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM HangSX WHERE TenHang = @TenHang)
+    BEGIN
+        PRINT 'Tên hãng sản xuất đã tồn tại'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO HangSX(MaHangSX, TenHang, DiaChi, SoDT, Email)
+        VALUES(@MaHangSX, @TenHang, @DiaChi, @SoDT, @Email)
+        PRINT 'Nhập thông tin hãng sản xuất thành công'
+    END
+END
+
+--3b--
+CREATE PROCEDURE SP_NhapSanPham
+    @MaSP nvarchar(10),
+    @TenHangSX nvarchar(50),
+    @TenSP nvarchar(50),
+    @SoLuong int,
+    @MauSac nvarchar(20),
+    @GiaBan float,
+    @DonViTinh nvarchar(10),
+    @MoTa nvarchar(100)
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM SanPham WHERE MaSP = @MaSP)
+    BEGIN
+        UPDATE SanPham
+        SET TenHangSX = @TenHangSX, TenSP = @TenSP, SoLuong = @SoLuong, MauSac = @MauSac, GiaBan = @GiaBan, DonViTinh = @DonViTinh, MoTa = @MoTa
+        WHERE MaSP = @MaSP
+        PRINT 'Cập nhật thông tin sản phẩm thành công'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO SanPham(MaSP, TenHangSX, TenSP, SoLuong, MauSac, GiaBan, DonViTinh, MoTa)
+        VALUES(@MaSP, @TenHangSX, @TenSP, @SoLuong, @MauSac, @GiaBan, @DonViTinh, @MoTa)
+        PRINT 'Nhập thông tin sản phẩm thành công'
+    END
+END
+
+--3c--
+CREATE PROCEDURE SP_XoaHangSX
+    @TenHang nvarchar(50)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM HangSX WHERE TenHang = @TenHang)
+    BEGIN
+        PRINT 'Tên hãng sản xuất không tồn tại'
+    END
+    ELSE
+    BEGIN
+        BEGIN TRANSACTION
+        DELETE FROM Nhap WHERE MaSP IN (SELECT MaSP FROM SanPham WHERE TenHangSX = @TenHang)
+        DELETE FROM Xuat WHERE MaSP IN (SELECT MaSP FROM SanPham WHERE TenHangSX = @TenHang)
+        DELETE FROM SanPham WHERE TenHangSX = @TenHang
+        DELETE FROM HangSX WHERE TenHang = @TenHang
+        COMMIT TRANSACTION
+        PRINT 'Xóa thông tin hãng sản xuất thành công'
+    END
+END
+
+--3d--
+CREATE PROCEDURE SP_NhapNhanVien
+    @MaNV nvarchar(10),
+    @TenNV nvarchar(50),
+    @GioiTinh nvarchar(5),
+    @DiaChi nvarchar(100),
+    @SoDT nvarchar(20),
+    @Email nvarchar(50),
+    @Phong nvarchar(50),
+    @Flag bit
+AS
+BEGIN
+    IF @Flag = 0
+    BEGIN
+        UPDATE NhanVien
+SET TenNV = @TenNV, GioiTinh = @GioiTinh, DiaChi = @DiaChi, SoDT = @SoDT, Email = @Email, Phong = @Phong
+        WHERE MaNV = @MaNV
+        PRINT 'Cập nhật thông tin nhân viên thành công'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO NhanVien(MaNV, TenNV, GioiTinh, DiaChi, SoDT, Email, Phong)
+        VALUES(@MaNV, @TenNV, @GioiTinh, @DiaChi, @SoDT, @Email, @Phong)
+        PRINT 'Nhập thông tin nhân viên thành công'
+    END
+END
+
+--3e--
+CREATE PROCEDURE SP_NhapNhap
+    @SoHDN nvarchar(10),
+    @MaSP nvarchar(10),
+    @MaNV nvarchar(10),
+    @NgayNhap date,
+    @SoLuongN int,
+    @DonGiaN float
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM SanPham WHERE MaSP = @MaSP)
+    BEGIN
+        PRINT 'Mã sản phẩm không tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM NhanVien WHERE MaNV = @MaNV)
+    BEGIN
+        PRINT 'Mã nhân viên không tồn tại'
+    END
+    ELSE
+    BEGIN
+        IF EXISTS (SELECT * FROM Nhap WHERE SoHDN = @SoHDN)
         BEGIN
-            PRINT N'Mã Khoa Không tồn tại trong cơ sở dữ liệu.'
+            UPDATE Nhap
+            SET MaSP = @MaSP, MaNV = @MaNV, NgayNhap = @NgayNhap, SoLuongN = @SoLuongN, DonGiaN = @DonGiaN
+            WHERE SoHDN = @SoHDN
+            PRINT 'Cập nhật thông tin phiếu nhập thành công'
         END
         ELSE
         BEGIN
-            INSERT INTO Lop (Malop, Tenlop, Khoa, Hedt, Namnhaphoc, Makhoa)
-            VALUES (@malop, @tenlop, @khoa, @hedt, @namnhaphoc, @makhoa)
-            PRINT N'Thêm lớp thành công.'
+            INSERT INTO Nhap(SoHDN, MaSP, MaNV, NgayNhap, SoLuongN, DonGiaN)
+            VALUES(@SoHDN, @MaSP, @MaNV, @NgayNhap, @SoLuongN, @DonGiaN)
+            PRINT 'Nhập thông tin phiếu nhập thành công'
         END
     END
 END
-go
-DECLARE @malop INT, @tenlop VARCHAR(50), @khoa VARCHAR(50), @hedt VARCHAR(50), @namnhaphoc INT, @makhoa INT
-SET @malop = 1
-SET @tenlop = 'Lop 1A'
-SET @khoa = 'Khoa Toan-Tin'
-SET @hedt = 'Đại Học '
-SET @namnhaphoc = 2022
-SET @makhoa = 1
-EXEC ThemLop @malop, @tenlop, @khoa, @hedt, @namnhaphoc, @makhoa
+
+--3f--
+CREATE PROCEDURE SP_Nhap_Xuat
+    @SoHDX nvarchar(10),
+    @MaSP nvarchar(10),
+    @MaNV nvarchar(10),
+    @NgayXuat date,
+    @SoLuongX int
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM SanPham WHERE MaSP=@MaSP)
+    BEGIN
+        PRINT 'Mã sản phẩm không tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM NhanVien WHERE MaNV=@MaNV)
+    BEGIN
+        PRINT 'Mã nhân viên không tồn tại'
+    END
+    ELSE
+    BEGIN
+        DECLARE @SoLuongTon int
+        SELECT @SoLuongTon = SoLuongTon FROM SanPham WHERE MaSP = @MaSP
+        IF(@SoLuongTon < @SoLuongX)
+        BEGIN
+            PRINT 'Số lượng xuất vượt quá số lượng tồn kho'
+        END
+        ELSE
+        BEGIN
+            IF EXISTS (SELECT * FROM Xuat WHERE SoHDX=@SoHDX)
+            BEGIN
+                UPDATE Xuat
+                SET MaSP=@MaSP, MaNV=@MaNV, NgayXuat=@NgayXuat, SoLuongX=@SoLuongX
+                WHERE SoHDX=@SoHDX
+            END
+            ELSE
+            BEGIN
+                INSERT INTO Xuat(SoHDX, MaSP, MaNV, NgayXuat, SoLuongX)
+                VALUES (@SoHDX, @MaSP, @MaNV, @NgayXuat, @SoLuongX)
+            END
+
+            UPDATE SanPham
+            SET SoLuongTon = SoLuongTon - @SoLuongX
+            WHERE MaSP = @MaSP
+        END
+    END
+END
+
+--3g--
+CREATE PROCEDURE SP_Xoa_NhanVien
+    @MaNV nvarchar(10)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM NhanVien WHERE MaNV = @MaNV)
+    BEGIN
+        PRINT 'Mã nhân viên không tồn tại'
+    END
+    ELSE
+BEGIN
+        DELETE FROM Nhap WHERE MaNV = @MaNV
+        DELETE FROM Xuat WHERE MaNV = @MaNV
+        DELETE FROM NhanVien WHERE MaNV = @MaNV
+        PRINT 'Đã xóa nhân viên thành công'
+    END
+END
+
+--3h--
+CREATE PROCEDURE SP_Xoa_SanPham
+    @MaSP nvarchar(10)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT * FROM SanPham WHERE MaSP = @MaSP)
+    BEGIN
+        PRINT 'Mã sản phẩm không tồn tại'
+    END
+    ELSE
+    BEGIN
+        DELETE FROM Nhap WHERE MaSP = @MaSP
+        DELETE FROM Xuat WHERE MaSP = @MaSP
+        DELETE FROM SanPham WHERE MaSP = @MaSP
+        PRINT 'Đã xóa sản phẩm thành công'
+    END
+END

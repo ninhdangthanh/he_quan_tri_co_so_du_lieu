@@ -163,3 +163,43 @@ BEGIN
     END
   END
 END
+
+--3
+CREATE PROCEDURE SP_CapNhatNgaySinh
+  @MaNV VARCHAR(10),
+  @NgaySinh DATE
+AS
+BEGIN
+  DECLARE @Count INT;
+  SELECT @Count = COUNT(*) FROM NhanVien WHERE MaNV = @MaNV;
+  IF @Count = 0
+  BEGIN
+    SELECT 'Không tìm thấy bản ghi cần cập nhật' AS ThongBao;
+  END
+  ELSE
+  BEGIN
+    UPDATE NhanVien SET NgaySinh = @NgaySinh WHERE MaNV = @MaNV;
+    SELECT 'Cập nhật thành công' AS ThongBao;
+  END
+END
+
+--4
+CREATE PROCEDURE SP_TongSoNhanVienTheoNgayCong
+  @NgayCong1 INT,
+  @NgayCong2 INT
+AS
+BEGIN
+  SELECT COUNT(*) AS TongSoNhanVien
+  FROM NhanVien
+  WHERE NgayCong BETWEEN @NgayCong1 AND @NgayCong2;
+END
+
+--5
+CREATE PROCEDURE SP_TongSoNhanVienTheoChucVu
+  @TenCV NVARCHAR(50)
+AS
+BEGIN
+  SELECT COUNT(*) AS TongSoNhanVien
+  FROM NhanVien
+  WHERE MaCV IN (SELECT MaCV FROM ChucVu WHERE TenCV = @TenCV);
+END

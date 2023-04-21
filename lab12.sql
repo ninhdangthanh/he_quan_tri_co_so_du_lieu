@@ -1,40 +1,36 @@
-﻿--A
-CREATE DATABASE QLNV;
+﻿--Cau1--		
+CREATE DATABASE QLNV
 
+USE QLNV
 
---B
-CREATE TABLE Chucvu (
-  MaCV NVARCHAR(2)  PRIMARY KEY,
-  TenCV NVARCHAR(30) NOT NULL
+CREATE TABLE tblChucvu (
+  MaCV VARCHAR(2) PRIMARY KEY,
+  TenCV VARCHAR(50) NOT NULL
 );
 
- CREATE TABLE NhanVien (
-  MaNV NVARCHAR(4) PRIMARY KEY,
-  MaCV NVARCHAR(2) NOT NULL,
-  TenNV NVARCHAR(30) NOT NULL,
-  NgaySinh DATETIME NOT NULL,
-  LuongCanBan FLOAT NOT NULL,
+CREATE TABLE tblSinhVien (
+  MaNV VARCHAR(10) PRIMARY KEY,
+  MaCV VARCHAR(2) NOT NULL,
+  TenNV VARCHAR(50) NOT NULL,
+  NgaySinh DATE NOT NULL,
+  LuongCanBan DECIMAL(18,2) NOT NULL,
   NgayCong INT NOT NULL,
-  PhuCap FLOAT NOT NULL,
-  CONSTRAINT fk_ChucVu_NhanVien FOREIGN KEY (MaCV) REFERENCES Chucvu(MaCV)
+  PhuCap DECIMAL(18,2) NOT NULL,
+  FOREIGN KEY (MaCV) REFERENCES tblChucvu(MaCV)
 );
 
+INSERT INTO tblChucvu (MaCV, TenCV)
+VALUES ('BV', 'Bảo Vệ'), ('GD', 'Giám Đốc'), ('HC', 'Hành Chính'), ('KT', 'Kế Toán'), ('TQ', 'Thủ Quỹ'), ('VS', 'Vệ Sinh');
 
---C
-insert into Chucvu values ('BV', 'Bảo vệ');
-insert into Chucvu values ('GD', 'Giám đốc');
-insert into Chucvu values ('HC', 'Hành chính');
-insert into Chucvu values ('KT', 'Kế toán');
-insert into Chucvu values ('TQ', 'Thủ quỹ');
-insert into Chucvu values ('VS', 'Vệ sinh');
+INSERT INTO tblSinhVien (MaNV, MaCV, TenNV, NgaySinh, LuongCanBan, NgayCong, PhuCap)
+VALUES 
+  ('NV01', 'GD', 'Nguyễn Văn An', '1977-12-12', 700000, 25, 500000),
+  ('NV02', 'BV', 'Bùi Văn Tí', '1978-10-10', 400000, 24, 100000),
+  ('NV03', 'KT', 'Trần Thanh Nhật', '1977-09-09', 600000, 26, 400000),
+  ('NV04', 'VS', 'Nguyễn Thị Út', '1980-10-10', 300000, 26, 300000),
+  ('NV05', 'HC', 'Lê Thị Hà', '1979-10-10', 500000, 27, 200000);
 
-insert into NhanVien values ('NV01', 'GD', 'Nguyễn Văn An', '12/12/1977 12:00:00', 700000, 25, 500000);
-insert into NhanVien values ('NV02', 'BV', 'Bùi Văn Tí', '10/10/1978 12:00:00', 400000, 24, 100000);
-insert into NhanVien values ('NV03', 'KT', 'Trần Thanh Nhật', '9/9/1977 12:00:00', 600000, 26, 400000);
-insert into NhanVien values ('NV04', 'VS', 'Nguyễn Thị Út', '10/10/1980 12:00:00', 300000, 26, 300000);
-insert into NhanVien values ('NV05', 'HC', 'Lê Thị Hà', '10/10/1979 12:00:00', 500000, 27, 200000);
-
---D
+--Yeu Cau:
 --a
 CREATE PROCEDURE SP_Them_Nhan_Vien 
   @MaNV VARCHAR(10),
@@ -91,7 +87,7 @@ BEGIN
 END
 
 --d
-CREATE FUNCTION TBL_LuongTB
+CREATE FUNCTION TBL_LuongTB()
 RETURNS TABLE 
 AS
 RETURN
@@ -166,44 +162,4 @@ BEGIN
       SELECT 'Thêm thành công' AS ThongBao;
     END
   END
-END
-
---3
-CREATE PROCEDURE SP_CapNhatNgaySinh
-  @MaNV VARCHAR(10),
-  @NgaySinh DATE
-AS
-BEGIN
-  DECLARE @Count INT;
-  SELECT @Count = COUNT(*) FROM NhanVien WHERE MaNV = @MaNV;
-  IF @Count = 0
-  BEGIN
-    SELECT 'Không tìm thấy bản ghi cần cập nhật' AS ThongBao;
-  END
-  ELSE
-  BEGIN
-    UPDATE NhanVien SET NgaySinh = @NgaySinh WHERE MaNV = @MaNV;
-    SELECT 'Cập nhật thành công' AS ThongBao;
-  END
-END
-
---4
-CREATE PROCEDURE SP_TongSoNhanVienTheoNgayCong
-  @NgayCong1 INT,
-  @NgayCong2 INT
-AS
-BEGIN
-  SELECT COUNT(*) AS TongSoNhanVien
-  FROM NhanVien
-  WHERE NgayCong BETWEEN @NgayCong1 AND @NgayCong2;
-END
-
---5
-CREATE PROCEDURE SP_TongSoNhanVienTheoChucVu
-  @TenCV NVARCHAR(50)
-AS
-BEGIN
-  SELECT COUNT(*) AS TongSoNhanVien
-  FROM NhanVien
-  WHERE MaCV IN (SELECT MaCV FROM ChucVu WHERE TenCV = @TenCV);
 END
